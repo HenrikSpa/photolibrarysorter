@@ -6,18 +6,15 @@ class Md5sums(object):
     def __init__(self):
         self.md5sum_set = set()
 
-    def check_md5sums(self, foldername):
-
-        skipfolders = ['AVF_INFO', 'Bilder_från_MaPa']
-
+    def check_md5sums(self, foldername, skip_folders):
         for root, dirs, files in os.walk(foldername, topdown=False):
             for name in files:
                 filename = os.path.join(root, name)
 
                 # Continue if file is in unnecessary folder
                 folderbrake = False
-                for skipfolder in skipfolders:
-                    if skipfolder in filename:
+                for skip_folder in skip_folders:
+                    if skip_folder in filename:
                         folderbrake = True
                         continue
                 if folderbrake:
@@ -33,7 +30,7 @@ class Md5sums(object):
 
 if __name__ == '__main__':
     md5sums = Md5sums()
-    md5sums.check_md5sums("H:\Foton_reformatted")
+    md5sums.check_md5sums('a_path', ['', ''])
 
-    with open('H:\Foton_test\Foton_reformatted_md5sum.txt', 'w') as f:
+    with open('filename', 'w') as f:
         f.write('\n'.join(str(sorted(md5sums.md5sum_set))))
