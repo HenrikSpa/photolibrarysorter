@@ -1,12 +1,32 @@
 # -*- coding: cp1252 -*-
 '''
-Created on 16 feb 2015
+Copies files from original_folder to outfolder and structures and rename files.
 
+The file date is read from exif or file modification time.
+All files are structured under folders named
+YEAR_nr_startmonth_endmonth_foton/videos/diverse[_suffix_from_keep_folder_names]
+
+ex:
+2005_3_jul-sep_diverse
+2016_1_jan-mar_foton,
+2016_1_jan-mar_videos,
+2016_1_jan-mar_diverse,
+2016_1_apr-jun_foton,
+...
+
+The monthly groups are 1_jan-mar, 2_apr-jun, 3_jul-sep and 4_okt-dec as specified in method create_folder
+
+Created on 16 feb 2015
 @author: HenrikSpa
 
-Known bugs:
-* The md5sum of the original and the name formatted file differs. No idea why. This must be solved before it's close to
-version 1.0.
+Config file example:
+[general]
+original_folder  = E:\photos_before_sorting
+outfolder = E:\reformatted_photos
+keep_folder_names = Christmas_2014,Christmas_2015
+skip_folders = AVF_INFO,some_other_folder
+rename = red:reduced,Red:reduced
+skip_folders_for_md5sums = AVF_INFO,some_other_folder
 
 '''
 import hashlib
@@ -18,7 +38,7 @@ import shutil
 import logging
 import configparser
 from collections import OrderedDict
-from md5sums import Md5sums
+from md5sums import Md5sums, md5sum
 
 try:
     import exifread
@@ -75,26 +95,31 @@ class Photolibrarysorter(object):
         else:
             self.imglist = imglist
 
-        if self.skip_folders_for_md5sums is None:
+        if skip_folders_for_md5sums is None:
             self.skip_folders_for_md5sums = []
         else:
             self.skip_folders_for_md5sums = skip_folders_for_md5sums
 
         # divlist = ['.txt', '.rar', '.zip']
 
-        logging.info('Using arguments:\n' + '\n'.join([': '.join([k, v]) for k, v in [('foldername', self.foldername),
-                                                                                    ('outfolder', self.outfolder),
-                                                                                    ('skip_folders', ', '.join(self.skip_folders)),
-                                                                                    ('keepname_list', ', '.join(self.keepname_list)),
-                                                                                    ('rename_dict', ', '.join([': '.join([_k, _v]) for _k, _v in self.rename_dict.items()])),
-                                                                                    ('skiplist', ', '.join(self.skip_extensions)),
-                                                                                    ('videolist', ', '.join(self.videolist)),
-                                                                                    ('imglist', ', '.join(self.imglist))]]))
+        logging.info('Using arguments:\n' + '\n'.join(
+            [': '.join([k, v]) for k, v in [
+                ('foldername', self.foldername),
+                ('outfolder', self.outfolder),
+                ('skip_folders', ', '.join(self.skip_folders)),
+                ('keepname_list', ', '.join(self.keepname_list)),
+                ('rename_dict', ', '.join([': '.join([_k, _v]) for _k, _v in self.rename_dict.items()])),
+                ('skiplist', ', '.join(self.skip_extensions)),
+                ('videolist', ', '.join(self.videolist)),
+                ('imglist', ', '.join(self.imglist)),
+                ('skip_folders_for_md5sums', ', '.join(self.skip_folders_for_md5sums))]]))
 
     def sort_library(self):
         md5sums = Md5sums()
 
+        logging.info("Checking md5sums for all files in outfolder")
         md5sums.check_md5sums(self.outfolder, self.skip_folders_for_md5sums)
+        logging.info("Checking md5sums for all files in outfolder done")
 
         self.md5sum_set = set([md5sum[0] for md5sum in md5sums.md5sum_set])
 
@@ -131,7 +156,7 @@ class Photolibrarysorter(object):
                     continue
 
                 # Skip the file if a duplicate has been handled
-                filemd5sum = hashlib.md5(filename.encode('utf-8')).hexdigest()
+                filemd5sum = md5sum(filename)
 
                 if filemd5sum in self.md5sum_set:
                     logging.WARNING('Duplicate file found, skipping it: ' + filename)
@@ -167,8 +192,8 @@ class Photolibrarysorter(object):
 
                     # Special date converter for a time when the camera clock was wrong
                     #TODO: This should be an option in some way.
-                    if '20100327' in root:
-                        img_date_obj = corrdate(img_date_obj)
+                    #if '20100327' in root:
+                    #    img_date_obj = corrdate(img_date_obj)
 
                     foldername = create_folder(self.outfolder, img_date_obj, '_foton' + addsuffix)
                     newfilename = date_filename(img_date_obj, ext)
@@ -212,7 +237,7 @@ class Photolibrarysorter(object):
 
 
 def copy_files(copydict):
-    for copy_to, copy_from in copydict.items():
+    for copy_to, copy_from in sorted(copydict.items()):
         shutil.copy2(copy_from, copy_to)
         logging.info("File " + copy_from + " copied to " + copy_to)
 
@@ -261,8 +286,6 @@ if __name__ == '__main__':
         original_folder = config["general"]["original_folder"]
         outfolder = config["general"]["outfolder"]
 
-        print(str(config))
-
         for dir in [original_folder, outfolder]:
             if not os.path.isdir(dir):
                 raise Exception("Directory " + dir + " could not be read.")
@@ -276,6 +299,20 @@ if __name__ == '__main__':
         else:
             rename_dict = {}
 
+        if 'skip_extensions' not in config["general"]:
+            skip_extensions = None
+        else:
+            skip_extensions = config["general"].get('skip_extensions', '').split(',')
+
+        if 'videolist' not in config["general"]:
+            videolist = None
+        else:
+            videolist = config["general"].get('videolist', '').split(',')
+
+        if 'imglist' not in config["general"]:
+            imglist = None
+        else:
+            imglist = config["general"].get('imglist', '').split(',')
     else:
         raise Exception("No configfile given")
 
@@ -288,5 +325,8 @@ if __name__ == '__main__':
                                             skip_folders=skip_folders,
                                             keepname_list=keepname_list,
                                             rename_dict=rename_dict,
-                                            skip_folders_for_md5sums=skip_folders_for_md5sums)
+                                            skip_folders_for_md5sums=skip_folders_for_md5sums,
+                                            imglist=imglist,
+                                            videolist=videolist,
+                                            skip_extensions=skip_extensions)
     photolibrarysorter.sort_library()
