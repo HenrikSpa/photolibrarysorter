@@ -27,6 +27,24 @@ class Md5sums(object):
                 else:
                     self.md5sum_set.add((filemd5sum, filename))
 
+    def read_md5sums(self, filename):
+        """
+        The file is assumed to contain rows like md5sum,filename\nmd5sum,filename\n...
+        :param filename:
+        :return:
+        """
+        with open(filename, 'r') as f:
+            self.md5sum_set = set([(row.split(',')[0], row.split(',')[1]) for row in f])
+
+    def write_md5sums(self, filename):
+        """
+        The file is written like md5sum,filename\nmd5sum,filename\n...
+        :param filename:
+        :return:
+        """
+        with open(filename, 'w') as f:
+            f.write('\n'.join([','.join(x) for x in (sorted(self.md5sum_set, key=itemgetter(1)))]))
+
 def md5sum(filename):
     """
     http://pythoncentral.io/hashing-files-with-python/
@@ -45,7 +63,5 @@ def md5sum(filename):
 
 if __name__ == '__main__':
     md5sums = Md5sums()
-    md5sums.check_md5sums('a_folder', [])
-
-    with open('E:\\dev\\result_file.txt', 'w') as f:
-        f.write('\n'.join([' '.join(x) for x in (sorted(md5sums.md5sum_set, key=itemgetter(1)))]))
+    md5sums.check_md5sums('E:\\Foton_reformatted', [])
+    md5sums.write_md5sums('E:\\Foton_reformatted\\md5sums.txt')

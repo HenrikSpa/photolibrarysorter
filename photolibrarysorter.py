@@ -27,13 +27,11 @@ keep_folder_names = Christmas_2014,Christmas_2015
 skip_folders = AVF_INFO,some_other_folder
 rename = red:reduced,Red:reduced
 skip_folders_for_md5sums = AVF_INFO,some_other_folder
+md5sum_file = E:\reformatted_photos\md5sums.txt
 
 Notes:
     * Creating md5sums for the existing photo library takes a very long time currently.
 
-TODO:
-    * Save checked md5sums to file and read only that one. Then add to that file again. (Checking md5sums every time
-    takes too much time).
 '''
 import os
 import sys
@@ -53,7 +51,7 @@ except:
 
 class Photolibrarysorter(object):
     def __init__(self, original_folder=None, outfolder=None, skip_folders=None, keepname_list=None, rename_dict=None,
-                 skip_extensions=None, videolist=None, imglist=None, skip_folders_for_md5sums=None):
+                 skip_extensions=None, videolist=None, imglist=None, skip_folders_for_md5sums=None, md5sum_file=None):
         """
 
         :param original_folder:
@@ -69,6 +67,7 @@ class Photolibrarysorter(object):
 
         self.foldername = original_folder
         self.outfolder = outfolder
+        self.md5sum_file = md5sum_file
 
         if skip_folders is None:
             self.skip_folders = []
@@ -117,19 +116,26 @@ class Photolibrarysorter(object):
                 ('skiplist', ', '.join(self.skip_extensions)),
                 ('videolist', ', '.join(self.videolist)),
                 ('imglist', ', '.join(self.imglist)),
-                ('skip_folders_for_md5sums', ', '.join(self.skip_folders_for_md5sums))]]))
+                ('skip_folders_for_md5sums', ', '.join(self.skip_folders_for_md5sums)),
+                ('md5sum_file', self.md5sum_file)]]))
 
     def sort_library(self):
-        md5sums = Md5sums()
+        self.md5sums = Md5sums()
 
-        logging.info("Checking md5sums for all files in outfolder")
-        md5sums.check_md5sums(self.outfolder, self.skip_folders_for_md5sums)
-        logging.info("Checking md5sums for all files in outfolder done")
+        if os.path.isfile(self.md5sum_file):
+            self.md5sums.read_md5sums(self.md5sum_file)
+            logging.info("Md5sums read from " + self.md5sum_file)
+        else:
+            logging.info("Checking md5sums for all files in outfolder")
+            self.md5sums.check_md5sums(self.outfolder, self.skip_folders_for_md5sums)
+            logging.info("Checking md5sums for all files in outfolder done")
 
-        self.md5sum_set = set([md5sum[0] for md5sum in md5sums.md5sum_set])
+        self.md5sum_set = set([md5sum[0] for md5sum in self.md5sums.md5sum_set])
 
         copydict = self.build_copydict()
         copy_files(copydict)
+        if self.md5sum_file:
+            self.md5sums.write_md5sums(self.md5sum_file)
 
     def build_copydict(self):
         """
@@ -222,6 +228,8 @@ class Photolibrarysorter(object):
                         usedexts.add(ext)
                         unhandled = False
 
+                self.md5sums.md5sum_set.add((filemd5sum, outfile))
+
                 logging.info('Oldfile: ' + filename + ' Newfile: ' + outfile)
 
         logging.info('allexts: ' + '\n'.join(allexts) + '\n')
@@ -290,6 +298,7 @@ if __name__ == '__main__':
 
         original_folder = config["general"]["original_folder"]
         outfolder = config["general"]["outfolder"]
+        md5sum_file = config["general"].get("md5sum_file", None)
 
         for dir in [original_folder, outfolder]:
             if not os.path.isdir(dir):
@@ -318,6 +327,7 @@ if __name__ == '__main__':
             imglist = None
         else:
             imglist = config["general"].get('imglist', '').split(',')
+
     else:
         raise Exception("No configfile given")
 
@@ -333,5 +343,6 @@ if __name__ == '__main__':
                                             skip_folders_for_md5sums=skip_folders_for_md5sums,
                                             imglist=imglist,
                                             videolist=videolist,
-                                            skip_extensions=skip_extensions)
+                                            skip_extensions=skip_extensions,
+                                            md5sum_file=md5sum_file)
     photolibrarysorter.sort_library()
