@@ -133,6 +133,8 @@ class Photolibrarysorter(object):
         self.md5sum_set = set([md5sum[0] for md5sum in self.md5sums.md5sum_set])
 
         copydict = self.build_copydict()
+        logging.info("Copydict built. Copying starting.")
+        print("Copydict built. Copying starting.")
         copy_files(copydict)
         if self.md5sum_file:
             self.md5sums.write_md5sums(self.md5sum_file)
@@ -170,7 +172,7 @@ class Photolibrarysorter(object):
                 filemd5sum = md5sum(filename)
 
                 if filemd5sum in self.md5sum_set:
-                    logging.WARNING('Duplicate file found, skipping it: ' + filename)
+                    logging.warning('Duplicate file found, skipping it: ' + filename)
                     continue
                 else:
                     self.md5sum_set.add(filemd5sum)
