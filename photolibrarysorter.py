@@ -68,6 +68,8 @@ class Photolibrarysorter(object):
         self.foldername = original_folder
         self.outfolder = outfolder
         self.md5sum_file = md5sum_file
+        self.md5sums = Md5sums()
+        self.md5sum_set = set()
 
         if skip_folders is None:
             self.skip_folders = []
@@ -120,8 +122,6 @@ class Photolibrarysorter(object):
                 ('md5sum_file', self.md5sum_file)]]))
 
     def sort_library(self):
-        self.md5sums = Md5sums()
-
         if os.path.isfile(self.md5sum_file):
             self.md5sums.read_md5sums(self.md5sum_file)
             logging.info("Md5sums read from " + self.md5sum_file)
