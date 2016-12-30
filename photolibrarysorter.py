@@ -28,8 +28,9 @@ skip_folders = AVF_INFO,some_other_folder
 rename = red:reduced,Red:reduced
 skip_folders_for_md5sums = AVF_INFO,some_other_folder
 
+Notes:
+    * Creating md5sums for the existing photo library takes a very long time currently.
 '''
-import hashlib
 import os
 import sys
 import time
