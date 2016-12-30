@@ -30,6 +30,10 @@ skip_folders_for_md5sums = AVF_INFO,some_other_folder
 
 Notes:
     * Creating md5sums for the existing photo library takes a very long time currently.
+
+TODO:
+    * Save checked md5sums to file and read only that one. Then add to that file again. (Checking md5sums every time
+    takes too much time).
 '''
 import os
 import sys
