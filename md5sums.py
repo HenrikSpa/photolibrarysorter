@@ -34,7 +34,7 @@ class Md5sums(object):
         :return:
         """
         with open(filename, 'r') as f:
-            self.md5sum_set = set([(row.split(',')[0], row.split(',')[1]) for row in f])
+            self.md5sum_set = set([(row.rstrip('\r\n').split(',')[0], row.rstrip('\r\n').split(',')[1]) for row in f if row.rstrip('\r\n')])
 
     def write_md5sums(self, filename):
         """
