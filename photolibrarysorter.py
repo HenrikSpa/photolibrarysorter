@@ -292,7 +292,7 @@ def create_folder(root, date_obj, foldersuffix=''):
 
 if __name__ == '__main__':
 
-    configfile = 'E:\\photolibrarysorter_config.txt'
+    configfile = 'F:\\photolibrarysorter_config.txt'
 
     if os.path.isfile(configfile):
         config = configparser.ConfigParser()
