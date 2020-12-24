@@ -27,13 +27,13 @@ class Md5sums(object):
                 else:
                     self.md5sum_set.add((filemd5sum, filename))
 
-    def read_md5sums(self, filename):
+    def read_md5sums(self, filename, encoding='utf-8'):
         """
         The file is assumed to contain rows like md5sum,filename\nmd5sum,filename\n...
         :param filename:
         :return:
         """
-        with open(filename, 'r') as f:
+        with open(filename, 'r', encoding=encoding) as f:
             self.md5sum_set = set([(row.rstrip('\r\n').split(',')[0], row.rstrip('\r\n').split(',')[1]) for row in f if row.rstrip('\r\n')])
 
     def write_md5sums(self, filename):

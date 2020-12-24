@@ -51,7 +51,8 @@ except:
 
 class Photolibrarysorter(object):
     def __init__(self, original_folder=None, outfolder=None, skip_folders=None, keepname_list=None, rename_dict=None,
-                 skip_extensions=None, videolist=None, imglist=None, skip_folders_for_md5sums=None, md5sum_file=None):
+                 skip_extensions=None, videolist=None, imglist=None, skip_folders_for_md5sums=None, md5sum_file=None,
+                 encoding='utf-8'):
         """
 
         :param original_folder:
@@ -70,6 +71,7 @@ class Photolibrarysorter(object):
         self.md5sum_file = md5sum_file
         self.md5sums = Md5sums()
         self.md5sum_set = set()
+        self.encoding = encoding
 
         if skip_folders is None:
             self.skip_folders = []
@@ -123,7 +125,7 @@ class Photolibrarysorter(object):
 
     def sort_library(self):
         if os.path.isfile(self.md5sum_file):
-            self.md5sums.read_md5sums(self.md5sum_file)
+            self.md5sums.read_md5sums(self.md5sum_file, self.encoding)
             logging.info("Md5sums read from " + self.md5sum_file)
         else:
             logging.info("Checking md5sums for all files in outfolder")
@@ -292,11 +294,12 @@ def create_folder(root, date_obj, foldersuffix=''):
 
 if __name__ == '__main__':
 
-    configfile = 'F:\\photolibrarysorter_config.txt'
-
+    #configfile = 'F:\\photolibrarysorter_config.txt'
+    encoding = 'cp1252'
+    configfile = '/media/henrik/Transcend2tb/photolibrarysorter_config_nix.txt'
     if os.path.isfile(configfile):
         config = configparser.ConfigParser()
-        config.read(configfile)
+        config.read(configfile, encoding=encoding)
 
         original_folder = config["general"]["original_folder"]
         outfolder = config["general"]["outfolder"]
@@ -346,5 +349,6 @@ if __name__ == '__main__':
                                             imglist=imglist,
                                             videolist=videolist,
                                             skip_extensions=skip_extensions,
-                                            md5sum_file=md5sum_file)
+                                            md5sum_file=md5sum_file,
+                                            encoding=encoding)
     photolibrarysorter.sort_library()
