@@ -4,8 +4,9 @@ from operator import itemgetter
 
 
 class Md5sums(object):
-    def __init__(self):
+    def __init__(self, encoding):
         self.md5sum_set = set()
+        self.encoding = encoding
 
     def check_md5sums(self, foldername, skip_folders):
         for root, dirs, files in os.walk(foldername, topdown=False):
@@ -27,13 +28,13 @@ class Md5sums(object):
                 else:
                     self.md5sum_set.add((filemd5sum, filename))
 
-    def read_md5sums(self, filename, encoding='utf-8'):
+    def read_md5sums(self, filename):
         """
         The file is assumed to contain rows like md5sum,filename\nmd5sum,filename\n...
         :param filename:
         :return:
         """
-        with open(filename, 'r', encoding=encoding) as f:
+        with open(filename, 'r', encoding=self.encoding) as f:
             self.md5sum_set = set([(row.rstrip('\r\n').split(',')[0], row.rstrip('\r\n').split(',')[1]) for row in f if row.rstrip('\r\n')])
 
     def write_md5sums(self, filename):
@@ -42,7 +43,7 @@ class Md5sums(object):
         :param filename:
         :return:
         """
-        with open(filename, 'w') as f:
+        with open(filename, 'w', encoding=self.encoding) as f:
             f.write('\n'.join([','.join(x) for x in (sorted(self.md5sum_set, key=itemgetter(1)))]))
 
 def md5sum(filename):
